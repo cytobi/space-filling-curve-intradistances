@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import numpy as np
 import matplotlib.pyplot as plt
+import logging
 
 class Curve(ABC):
     def __init__(self, size) -> None:
@@ -77,20 +78,29 @@ def calculate_average_distance(m):
 if __name__ == "__main__":
     max_size = 256
 
+    logging.basicConfig(level=logging.INFO)
+    logging.info(f"Using max size {max_size}")
+
+    max_size_log2 = int(np.log2(max_size))
+    max_size_log3 = int(np.emath.logn(3, max_size))
+
+    logging.info("Calculating Lines plot")
     lines_data = [(i, calculate_average_distance(Lines(i).get_matrix())) for i in range(2, max_size+1)]
     plt.plot(*zip(*lines_data), label="Lines", marker=".")
 
-    max_size_log2 = int(np.log2(max_size))
+    logging.info("Calculating Hilbert plot")
     hilbert_data = [(2**i, calculate_average_distance(Hilbert(i).get_matrix())) for i in range(1, max_size_log2+1)]
     plt.plot(*zip(*hilbert_data), label="Hilbert", marker=".")
 
+    logging.info("Calculating Z plot")
     z_data = [(2**i, calculate_average_distance(Z(i).get_matrix())) for i in range(1, max_size_log2+1)]
     plt.plot(*zip(*z_data), label="Z", marker=".")
 
-    max_size_log3 = int(np.emath.logn(3, max_size))
+    logging.info("Calculating Peano plot")
     peano_data = [(3**i, calculate_average_distance(Peano(i).get_matrix())) for i in range(1, max_size_log3+1)]
     plt.plot(*zip(*peano_data), label="Peano", marker=".")
 
+    logging.info("Plotting")
     plt.legend()
     plt.xlabel("Size")
     plt.ylabel("Average distance to neighbouring cells")
