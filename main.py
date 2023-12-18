@@ -6,10 +6,17 @@ import logging
 class Curve(ABC):
     def __init__(self, size) -> None:
         self.size = size
+        self.name = self.__class__.__name__.lower()
 
     @abstractmethod
     def get_matrix(self):
         pass
+
+    def draw(self):
+        plt.imshow(self.get_matrix())
+        plt.title(f"{self.name.capitalize()} curve of size {self.size}")
+        plt.savefig(f"curves/{self.name}.png", dpi=300)
+        plt.clf()
 
 class Lines(Curve): # horizontal line pattern from left to right and back
     def get_matrix(self):
@@ -122,3 +129,7 @@ if __name__ == "__main__":
     plt.xlabel("Size")
     plt.ylabel("Average distance to neighbouring cells")
     plt.savefig("plot.png", dpi=300)
+    plt.clf()
+
+    logging.info("Drawing curves")
+    Lines(16).draw()
