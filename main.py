@@ -57,6 +57,19 @@ class Peano(Curve): # Peano curve
     def get_matrix(self):
         return self.create(self.size)
     
+class Gray(Curve): # Gray code curve
+    def create(self, iterations):
+        if iterations == 1:
+            return np.array([[1, 2], [0, 3]])
+        else:
+            m = self.create(iterations-1)
+            mr = np.rot90(m, 2)
+            m = np.block([[mr+1*m.size, mr+2*m.size], [m+0*m.size, m+3*m.size]])
+            return m
+        
+    def get_matrix(self):
+        return self.create(self.size)
+    
         
 def calculate_average_distance(m):
     len = m.shape[0]
@@ -99,6 +112,10 @@ if __name__ == "__main__":
     logging.info("Calculating Peano plot")
     peano_data = [(3**i, calculate_average_distance(Peano(i).get_matrix())) for i in range(1, max_size_log3+1)]
     plt.plot(*zip(*peano_data), label="Peano", marker=".")
+
+    logging.info("Calculating Gray plot")
+    gray_data = [(2**i, calculate_average_distance(Gray(i).get_matrix())) for i in range(1, max_size_log2+1)]
+    plt.plot(*zip(*gray_data), label="Gray", marker=".")
 
     logging.info("Plotting")
     plt.legend()
