@@ -133,3 +133,7 @@ if __name__ == "__main__":
 
     logging.info("Drawing curves")
     Lines(16).draw()
+    Hilbert(4).draw()
+    Z(4).draw()
+    Peano(3).draw()
+    Gray(4).draw()
