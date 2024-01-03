@@ -85,26 +85,8 @@ def gaussian_kernel(l=5, sig=1.):
     return kernel / np.sum(kernel)
 
 
-def calculate_average_distance(m):
-    logging.debug(f"Calculating average distance for matrix of size {m.shape}")
-
-    len = m.shape[0]
-    sum = 0
-
-    # calculate distance to right neighbor
-    for i in range(len-1):
-        for j in range(len):
-            sum += abs(m[i][j] - m[i+1][j])
-
-    # calculate distance to bottom neighbor
-    for i in range(len):
-        for j in range(len-1):
-            sum += abs(m[i][j] - m[i][j+1])
-
-    return sum / (2 * (len-1) * len)
-
-def calculate_median_distance(m):
-    logging.debug(f"Calculating median distance for matrix of size {m.shape}")
+def calculate_direct_distances(m):
+    logging.debug(f"Calculating direct distances for matrix of size {m.shape}")
 
     len = m.shape[0]
     distances = []
@@ -119,10 +101,10 @@ def calculate_median_distance(m):
         for j in range(len-1):
             distances.append(abs(m[i][j] - m[i][j+1]))
 
-    return np.median(distances)
+    return distances
 
-def calculate_weighted_distance(m, kernel):
-    logging.debug(f"Calculating weighted distance for matrix of size {m.shape} with kernel of size {kernel.shape}")
+def calculate_weighted_distances(m, kernel):
+    logging.debug(f"Calculating weighted distances for matrix of size {m.shape} with kernel of size {kernel.shape}")
 
     len = m.shape[0]
     kernel_size = kernel.shape[0]
@@ -140,7 +122,7 @@ def calculate_weighted_distance(m, kernel):
                     if x >= 0 and x < len and y >= 0 and y < len:
                         distances.append(abs(m[i][j] - m[x][y]) * kernel[k][l])
     
-    return np.average(distances)
+    return distances
 
 
 if __name__ == "__main__":
@@ -156,29 +138,34 @@ if __name__ == "__main__":
     gkern = gaussian_kernel(*gkern_param)
 
     logging.info("Calculating Lines plot (may take a while)")
-    lines_average_data = [(i, calculate_average_distance(Lines(i).get_matrix())) for i in range(2, max_size+1)]
-    lines_median_data = [(i, calculate_median_distance(Lines(i).get_matrix())) for i in range(2, max_size+1)]
-    lines_gaussian_data = [(i, calculate_weighted_distance(Lines(i).get_matrix(), gkern)) for i in range(2, max_size+1)]
+    lines_direct_distances = [(i, calculate_direct_distances(Lines(i).get_matrix())) for i in range(2, max_size+1)]
+    lines_average_data = [(i, np.average(direct_distances)) for i, direct_distances in lines_direct_distances]
+    lines_median_data = [(i, np.median(direct_distances)) for i, direct_distances in lines_direct_distances]
+    lines_gaussian_data = [(i, np.average(calculate_weighted_distances(Lines(i).get_matrix(), gkern))) for i in range(2, max_size+1)]
 
     logging.info("Calculating Hilbert plot")
-    hilbert_average_data = [(2**i, calculate_average_distance(Hilbert(i).get_matrix())) for i in range(1, max_size_log2+1)]
-    hilbert_median_data = [(2**i, calculate_median_distance(Hilbert(i).get_matrix())) for i in range(1, max_size_log2+1)]
-    hilbert_gaussian_data = [(2**i, calculate_weighted_distance(Hilbert(i).get_matrix(), gkern)) for i in range(1, max_size_log2+1)]
+    hilbert_direct_distances = [(i, calculate_direct_distances(Hilbert(i).get_matrix())) for i in range(1, max_size_log2+1)]
+    hilbert_average_data = [(2**i, np.average(direct_distances)) for i, direct_distances in hilbert_direct_distances]
+    hilbert_median_data = [(2**i, np.median(direct_distances)) for i, direct_distances in hilbert_direct_distances]
+    hilbert_gaussian_data = [(2**i, np.average(calculate_weighted_distances(Hilbert(i).get_matrix(), gkern))) for i in range(1, max_size_log2+1)]
 
     logging.info("Calculating Z plot")
-    z_average_data = [(2**i, calculate_average_distance(Z(i).get_matrix())) for i in range(1, max_size_log2+1)]
-    z_median_data = [(2**i, calculate_median_distance(Z(i).get_matrix())) for i in range(1, max_size_log2+1)]
-    z_gaussian_data = [(2**i, calculate_weighted_distance(Z(i).get_matrix(), gkern)) for i in range(1, max_size_log2+1)]
+    z_direct_distances = [(i, calculate_direct_distances(Z(i).get_matrix())) for i in range(1, max_size_log2+1)]
+    z_average_data = [(2**i, np.average(direct_distances)) for i, direct_distances in z_direct_distances]
+    z_median_data = [(2**i, np.median(direct_distances)) for i, direct_distances in z_direct_distances]
+    z_gaussian_data = [(2**i, np.average(calculate_weighted_distances(Z(i).get_matrix(), gkern))) for i in range(1, max_size_log2+1)]
 
     logging.info("Calculating Peano plot")
-    peano_average_data = [(3**i, calculate_average_distance(Peano(i).get_matrix())) for i in range(1, max_size_log3+1)]
-    peano_median_data = [(3**i, calculate_median_distance(Peano(i).get_matrix())) for i in range(1, max_size_log3+1)]
-    peano_gaussian_data = [(3**i, calculate_weighted_distance(Peano(i).get_matrix(), gkern)) for i in range(1, max_size_log3+1)]
+    peano_direct_distances = [(i, calculate_direct_distances(Peano(i).get_matrix())) for i in range(1, max_size_log3+1)]
+    peano_average_data = [(3**i, np.average(direct_distances)) for i, direct_distances in peano_direct_distances]
+    peano_median_data = [(3**i, np.median(direct_distances)) for i, direct_distances in peano_direct_distances]
+    peano_gaussian_data = [(3**i, np.average(calculate_weighted_distances(Peano(i).get_matrix(), gkern))) for i in range(1, max_size_log3+1)]
 
     logging.info("Calculating Gray plot")
-    gray_average_data = [(2**i, calculate_average_distance(Gray(i).get_matrix())) for i in range(1, max_size_log2+1)]
-    gray_median_data = [(2**i, calculate_median_distance(Gray(i).get_matrix())) for i in range(1, max_size_log2+1)]
-    gray_gaussian_data = [(2**i, calculate_weighted_distance(Gray(i).get_matrix(), gkern)) for i in range(1, max_size_log2+1)]
+    gray_direct_distances = [(i, calculate_direct_distances(Gray(i).get_matrix())) for i in range(1, max_size_log2+1)]
+    gray_average_data = [(2**i, np.average(direct_distances)) for i, direct_distances in gray_direct_distances]
+    gray_median_data = [(2**i, np.median(direct_distances)) for i, direct_distances in gray_direct_distances]
+    gray_gaussian_data = [(2**i, np.average(calculate_weighted_distances(Gray(i).get_matrix(), gkern))) for i in range(1, max_size_log2+1)]
 
     logging.info("Plotting average distance curves")
     plt.plot(*zip(*lines_average_data), label="Lines", marker=".")
