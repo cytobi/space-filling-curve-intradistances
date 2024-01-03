@@ -77,8 +77,17 @@ class Gray(Curve): # Gray code curve
     def get_matrix(self):
         return self.create(self.size)
     
-        
+
+def gaussian_kernel(l=5, sig=1.):
+    ax = np.linspace(-(l - 1) / 2., (l - 1) / 2., l)
+    gauss = np.exp(-0.5 * np.square(ax) / np.square(sig))
+    kernel = np.outer(gauss, gauss)
+    return kernel / np.sum(kernel)
+
+
 def calculate_average_distance(m):
+    logging.debug(f"Calculating average distance for matrix of size {m.shape}")
+
     len = m.shape[0]
     sum = 0
 
@@ -95,6 +104,8 @@ def calculate_average_distance(m):
     return sum / (2 * (len-1) * len)
 
 def calculate_median_distance(m):
+    logging.debug(f"Calculating median distance for matrix of size {m.shape}")
+
     len = m.shape[0]
     distances = []
 
@@ -110,35 +121,64 @@ def calculate_median_distance(m):
 
     return np.median(distances)
 
+def calculate_weighted_distance(m, kernel):
+    logging.debug(f"Calculating weighted distance for matrix of size {m.shape} with kernel of size {kernel.shape}")
+
+    len = m.shape[0]
+    kernel_size = kernel.shape[0]
+    distances = []
+
+    kernel = kernel / np.sum(kernel) # normalize kernel
+    kernel = kernel * kernel_size**2 # scale kernel so that average value in kernel is 1
+
+    for i in range(len):
+        for j in range(len):
+            for k in range(kernel_size):
+                for l in range(kernel_size):
+                    x = i + k - kernel_size // 2
+                    y = j + l - kernel_size // 2
+                    if x >= 0 and x < len and y >= 0 and y < len:
+                        distances.append(abs(m[i][j] - m[x][y]) * kernel[k][l])
+    
+    return np.average(distances)
+
 
 if __name__ == "__main__":
     max_size = 256
+    gkern_param = 5, 1
 
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.DEBUG)
     logging.info(f"Using max size {max_size}")
 
     max_size_log2 = int(np.log2(max_size))
     max_size_log3 = int(np.emath.logn(3, max_size))
 
-    logging.info("Calculating Lines plot")
+    gkern = gaussian_kernel(*gkern_param)
+
+    logging.info("Calculating Lines plot (may take a while)")
     lines_average_data = [(i, calculate_average_distance(Lines(i).get_matrix())) for i in range(2, max_size+1)]
     lines_median_data = [(i, calculate_median_distance(Lines(i).get_matrix())) for i in range(2, max_size+1)]
+    lines_gaussian_data = [(i, calculate_weighted_distance(Lines(i).get_matrix(), gkern)) for i in range(2, max_size+1)]
 
     logging.info("Calculating Hilbert plot")
     hilbert_average_data = [(2**i, calculate_average_distance(Hilbert(i).get_matrix())) for i in range(1, max_size_log2+1)]
     hilbert_median_data = [(2**i, calculate_median_distance(Hilbert(i).get_matrix())) for i in range(1, max_size_log2+1)]
+    hilbert_gaussian_data = [(2**i, calculate_weighted_distance(Hilbert(i).get_matrix(), gkern)) for i in range(1, max_size_log2+1)]
 
     logging.info("Calculating Z plot")
     z_average_data = [(2**i, calculate_average_distance(Z(i).get_matrix())) for i in range(1, max_size_log2+1)]
     z_median_data = [(2**i, calculate_median_distance(Z(i).get_matrix())) for i in range(1, max_size_log2+1)]
+    z_gaussian_data = [(2**i, calculate_weighted_distance(Z(i).get_matrix(), gkern)) for i in range(1, max_size_log2+1)]
 
     logging.info("Calculating Peano plot")
     peano_average_data = [(3**i, calculate_average_distance(Peano(i).get_matrix())) for i in range(1, max_size_log3+1)]
     peano_median_data = [(3**i, calculate_median_distance(Peano(i).get_matrix())) for i in range(1, max_size_log3+1)]
+    peano_gaussian_data = [(3**i, calculate_weighted_distance(Peano(i).get_matrix(), gkern)) for i in range(1, max_size_log3+1)]
 
     logging.info("Calculating Gray plot")
     gray_average_data = [(2**i, calculate_average_distance(Gray(i).get_matrix())) for i in range(1, max_size_log2+1)]
     gray_median_data = [(2**i, calculate_median_distance(Gray(i).get_matrix())) for i in range(1, max_size_log2+1)]
+    gray_gaussian_data = [(2**i, calculate_weighted_distance(Gray(i).get_matrix(), gkern)) for i in range(1, max_size_log2+1)]
 
     logging.info("Plotting average distance curves")
     plt.plot(*zip(*lines_average_data), label="Lines", marker=".")
@@ -162,6 +202,18 @@ if __name__ == "__main__":
     plt.xlabel("Size")
     plt.ylabel("Median distance to neighbouring cells")
     plt.savefig("plot_median.png", dpi=300)
+    plt.clf()
+
+    logging.info("Plotting gaussian distance curves")
+    plt.plot(*zip(*lines_gaussian_data), label="Lines", marker=".")
+    plt.plot(*zip(*hilbert_gaussian_data), label="Hilbert", marker=".")
+    plt.plot(*zip(*z_gaussian_data), label="Z", marker=".")
+    plt.plot(*zip(*peano_gaussian_data), label="Peano", marker=".")
+    plt.plot(*zip(*gray_gaussian_data), label="Gray", marker=".")
+    plt.legend()
+    plt.xlabel("Size")
+    plt.ylabel("Gaussian weighted distance to neighbouring cells")
+    plt.savefig("plot_gaussian.png", dpi=300)
     plt.clf()
 
     logging.info("Drawing curves")
