@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 import matplotlib.pyplot as plt
 import logging
+from tqdm import tqdm
 
 class Curve(ABC):
     def __init__(self, size) -> None:
@@ -129,7 +130,7 @@ if __name__ == "__main__":
     max_size = 256
     gkern_param = 5, 1
 
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     logging.info(f"Using max size {max_size}")
 
     max_size_log2 = int(np.log2(max_size))
@@ -137,35 +138,45 @@ if __name__ == "__main__":
 
     gkern = gaussian_kernel(*gkern_param)
 
-    logging.info("Calculating Lines plot (may take a while)")
-    lines_direct_distances = [(i, calculate_direct_distances(Lines(i).get_matrix())) for i in range(2, max_size+1)]
+    logging.info("Calculating Lines plot")
+    logging.info("Calculating direct distances")
+    lines_direct_distances = [(i, calculate_direct_distances(Lines(i).get_matrix())) for i in tqdm(range(2, max_size+1))]
     lines_average_data = [(i, np.average(direct_distances)) for i, direct_distances in lines_direct_distances]
     lines_median_data = [(i, np.median(direct_distances)) for i, direct_distances in lines_direct_distances]
-    lines_gaussian_data = [(i, np.average(calculate_weighted_distances(Lines(i).get_matrix(), gkern))) for i in range(2, max_size+1)]
+    logging.info("Calculating gaussian weighted distances")
+    lines_gaussian_data = [(i, np.average(calculate_weighted_distances(Lines(i).get_matrix(), gkern))) for i in tqdm(range(2, max_size+1))]
 
     logging.info("Calculating Hilbert plot")
-    hilbert_direct_distances = [(i, calculate_direct_distances(Hilbert(i).get_matrix())) for i in range(1, max_size_log2+1)]
+    logging.info("Calculating direct distances")
+    hilbert_direct_distances = [(i, calculate_direct_distances(Hilbert(i).get_matrix())) for i in tqdm(range(1, max_size_log2+1))]
     hilbert_average_data = [(2**i, np.average(direct_distances)) for i, direct_distances in hilbert_direct_distances]
     hilbert_median_data = [(2**i, np.median(direct_distances)) for i, direct_distances in hilbert_direct_distances]
-    hilbert_gaussian_data = [(2**i, np.average(calculate_weighted_distances(Hilbert(i).get_matrix(), gkern))) for i in range(1, max_size_log2+1)]
+    logging.info("Calculating gaussian weighted distances")
+    hilbert_gaussian_data = [(2**i, np.average(calculate_weighted_distances(Hilbert(i).get_matrix(), gkern))) for i in tqdm(range(1, max_size_log2+1))]
 
     logging.info("Calculating Z plot")
-    z_direct_distances = [(i, calculate_direct_distances(Z(i).get_matrix())) for i in range(1, max_size_log2+1)]
+    logging.info("Calculating direct distances")
+    z_direct_distances = [(i, calculate_direct_distances(Z(i).get_matrix())) for i in tqdm(range(1, max_size_log2+1))]
     z_average_data = [(2**i, np.average(direct_distances)) for i, direct_distances in z_direct_distances]
     z_median_data = [(2**i, np.median(direct_distances)) for i, direct_distances in z_direct_distances]
-    z_gaussian_data = [(2**i, np.average(calculate_weighted_distances(Z(i).get_matrix(), gkern))) for i in range(1, max_size_log2+1)]
+    logging.info("Calculating gaussian weighted distances")
+    z_gaussian_data = [(2**i, np.average(calculate_weighted_distances(Z(i).get_matrix(), gkern))) for i in tqdm(range(1, max_size_log2+1))]
 
     logging.info("Calculating Peano plot")
-    peano_direct_distances = [(i, calculate_direct_distances(Peano(i).get_matrix())) for i in range(1, max_size_log3+1)]
+    logging.info("Calculating direct distances")
+    peano_direct_distances = [(i, calculate_direct_distances(Peano(i).get_matrix())) for i in tqdm(range(1, max_size_log3+1))]
     peano_average_data = [(3**i, np.average(direct_distances)) for i, direct_distances in peano_direct_distances]
     peano_median_data = [(3**i, np.median(direct_distances)) for i, direct_distances in peano_direct_distances]
-    peano_gaussian_data = [(3**i, np.average(calculate_weighted_distances(Peano(i).get_matrix(), gkern))) for i in range(1, max_size_log3+1)]
+    logging.info("Calculating gaussian weighted distances")
+    peano_gaussian_data = [(3**i, np.average(calculate_weighted_distances(Peano(i).get_matrix(), gkern))) for i in tqdm(range(1, max_size_log3+1))]
 
     logging.info("Calculating Gray plot")
-    gray_direct_distances = [(i, calculate_direct_distances(Gray(i).get_matrix())) for i in range(1, max_size_log2+1)]
+    logging.info("Calculating direct distances")
+    gray_direct_distances = [(i, calculate_direct_distances(Gray(i).get_matrix())) for i in tqdm(range(1, max_size_log2+1))]
     gray_average_data = [(2**i, np.average(direct_distances)) for i, direct_distances in gray_direct_distances]
     gray_median_data = [(2**i, np.median(direct_distances)) for i, direct_distances in gray_direct_distances]
-    gray_gaussian_data = [(2**i, np.average(calculate_weighted_distances(Gray(i).get_matrix(), gkern))) for i in range(1, max_size_log2+1)]
+    logging.info("Calculating gaussian weighted distances")
+    gray_gaussian_data = [(2**i, np.average(calculate_weighted_distances(Gray(i).get_matrix(), gkern))) for i in tqdm(range(1, max_size_log2+1))]
 
     logging.info("Plotting average distance curves")
     plt.plot(*zip(*lines_average_data), label="Lines", marker=".")
