@@ -2,7 +2,7 @@
 calculating and plotting the average distance from one cell to the next with various space filling curves
 
 ## plot of size (side length of square which shall be tiled) vs distance
-![plot showing Gray code curves have the largest average distance while Z order curves have the smallest](./plot.png)
+![plot showing Gray code curves have the largest average distance while Z order curves have the smallest](./plot_average.png)
 
 ## examples of the curves used
 *size means iterations/depth in this context, not side length*
